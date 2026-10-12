@@ -1,0 +1,103 @@
+
+\documentclass{beamer}
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Thème de la présentation
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+\title[Génération Automatique de Code GUI]{Modèle de Génération Automatique de Code à partir de Maquettes GUI Haute Fidélité}
+\subtitle{Utilisation des techniques de Deep Learning}
+\author{Résumé de l'article de Samir et al. (2024)}
+\date{\today}
+
+\begin{document}
+
+% Slide de titre
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- INTRODUCTION ---
+\begin{frame}{Introduction}
+    \begin{itemize}
+        \item Les interfaces graphiques (GUI) sont essentielles pour l'interaction utilisateur-logiciel en raison de leur nature visuelle .
+        \item Le flux de travail classique repose sur la création de \textbf{maquettes (mockups)} de haute fidélité avant l'implémentation.
+        \item Le développement des GUI est souvent une tâche \textbf{manuelle et chronophage} .
+        \item Environ 45\% de la taille du code d'un logiciel concerne l'interface utilisateur, occupant près de 50\% du temps de développement.
+    \end{itemize}
+\end{frame}
+
+% --- LE PROBLEME ---
+\begin{frame}{Le Problème}
+    \begin{block}{Constats majeurs}
+        \begin{itemize}
+            \item Processus fastidieux et répétitif dû aux changements fréquents de spécifications .
+            \item Les développeurs passent trop de temps sur l'UI au détriment de la logique métier du logiciel.
+            \item Tâche sujette aux erreurs lors de l'extraction des éléments visuels et de leur hiérarchie .
+            \item Nécessité de réimplémenter l'interface pour chaque plateforme native (Android, iOS, Web) .
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+% --- PROBLEMATIQUE ---
+\begin{frame}{Problématique}
+    \begin{center}
+        \Large \textbf{Comment automatiser efficacement la conversion d'une image de maquette haute fidélité en code frontal multiplateforme tout en conservant la hiérarchie visuelle ?}
+    \end{center}
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Compréhension visuelle par la machine (Computer Vision) .
+        \item Diversité des designs et complexité des composants GUI.
+        \item Manque de précision des jeux de données existants (Rico, etc.).
+    \end{itemize}
+\end{frame}
+
+% --- SOLUTIONS APPORTÉES (Architecture) ---
+\begin{frame}{Solutions apportées : Architecture}
+    L'étude propose un pipeline en cinq phases  :
+    \begin{enumerate}
+        \item \textbf{Préparation du modèle :} Utilisation de YOLOv7 avec réglage d'hyperparamètres (K-Mean++ pour les anchor boxes).
+        \item \textbf{Détection d'objets :} Séparation en deux modèles distincts pour améliorer la précision :
+            \begin{itemize}
+                \item \textbf{Modèle Atomique :} (boutons, icônes, etc.) .
+                \item \textbf{Modèle Conteneur :} (barres d'outils, tiroirs, etc.) .
+            \end{itemize}
+        \item \textbf{Post-traitement :} Extraction des styles (couleurs, tailles) et du texte via OCR (Tesseract).
+        \item \textbf{Hiérarchie du layout :} Algorithme de groupement pour recréer la structure spatiale.
+        \item \textbf{Génération de code :} Production de code \textbf{Flutter} multiplateforme .
+    \end{enumerate}
+\end{frame}
+
+% --- SOLUTIONS APPORTÉES (Données) ---
+\begin{frame}{Solutions apportées : Pipeline de données}
+    \begin{itemize}
+        \item \textbf{Nettoyage du dataset :} Création d'un pipeline de prétraitement pour corriger les erreurs du dataset Rico (éléments mal alignés, étiquettes incorrectes) .
+        \item \textbf{Équilibrage :} Technique pour assurer une distribution uniforme des classes dans l'entraînement .
+        \item \textbf{Résultats :} Précision moyenne (mAP) de \textbf{91,37\%} pour les éléments atomiques et \textbf{87,40\%} pour les conteneurs .
+    \end{itemize}
+\end{frame}
+
+% --- LIMITES ---
+\begin{frame}{Limites}
+    \begin{itemize}
+        \item \textbf{Taille des données :} Les jeux de données d'entraînement restent relativement petits malgré les bons résultats .
+        \item \textbf{Cas complexes :} Difficultés persistantes pour certains agencements hiérarchiques spécifiques (ex: alignement complexe de cartes verticales).
+        \item \textbf{Statisme :} Incapacité à distinguer certains types dynamiques comme la VIDEO de l'IMAGE sur des captures statiques.
+        \item \textbf{Dépendance à la qualité :} Nécessite une vérification manuelle pour assurer un étiquetage complet lors de l'entraînement .
+    \end{itemize}
+\end{frame}
+
+% --- CONCLUSION ---
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item Le modèle démontre que le \textbf{Deep Learning} est parfaitement adapté à la reconnaissance visuelle des composants GUI .
+        \item L'approche à \textbf{deux modèles (YOLOv7)} surpasse les approches à modèle unique en raison de la diversité des échelles d'objets .
+        \item Solution prometteuse pour réduire drastiquement le temps de développement front-end .
+        \item \textbf{Futur :} Augmenter la diversité des données et affiner l'algorithme de groupement spatial .
+    \end{itemize}
+\end{frame}
+
+\end{document}

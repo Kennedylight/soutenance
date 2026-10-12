@@ -1,0 +1,182 @@
+\documentclass[11pt]{beamer}
+
+% ===================== THEME & COLORS =====================
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{navy}{RGB}{27,42,74}
+\definecolor{accentblue}{RGB}{47,84,150}
+\definecolor{lightbg}{RGB}{235,240,248}
+
+\setbeamercolor{structure}{fg=navy}
+\setbeamercolor{title}{fg=white,bg=navy}
+\setbeamercolor{frametitle}{fg=white,bg=navy}
+\setbeamercolor{block title}{fg=white,bg=accentblue}
+\setbeamercolor{block body}{fg=black,bg=lightbg}
+\setbeamerfont{frametitle}{series=\bfseries}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+\newtcolorbox{infobox}[1]{
+  colback=lightbg, colframe=accentblue, colbacktitle=navy,
+  coltitle=white, fonttitle=\bfseries, title=#1,
+  boxrule=0.4pt, arc=2pt, breakable
+}
+
+\newcommand{\circnum}[1]{%
+  \tikz[baseline=-0.6ex]\node[circle,fill=navy,text=white,font=\bfseries\small,inner sep=1.6pt]{#1};%
+}
+
+% ===================== TITLE INFO =====================
+\title[Maquette \(\rightarrow\) Code]{De la maquette au code\\[2pt]\large Génération automatique de code frontend multi-langage à partir d'une maquette UX haute fidélité}
+\author[À COMPLÉTER]{KOUONGA TADIE KENNEDY}
+\institute[Université de Douala]{
+  Université de Douala\\
+  Master II Recherche\\[4pt]
+  \small Encadreur(s) : [À COMPLÉTER — Nom de l'encadreur]
+}
+\date{17 juillet 2026}
+
+\begin{document}
+
+% ------------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ------------------------------------------------------------
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+% ============================================================
+\section{Problématique}
+\begin{frame}{Problématique}
+
+  \vspace{0.5em}
+  \begin{infobox}{Question centrale}
+    Comment automatiser la transformation d'une maquette UX haute fidélité en code
+    frontend fonctionnel, fidèle visuellement, et généralisable à plusieurs langages,
+    afin de recentrer le développeur sur la logique métier ?
+  \end{infobox}
+\end{frame}
+
+% ============================================================
+\section{Objectif global}
+\begin{frame}{Objectif global}
+  \begin{infobox}{Objectif}
+    Concevoir une méthode capable de transformer automatiquement une \textbf{maquette
+    UX haute fidélité} en \textbf{code frontend} fonctionnel, fidèle au design
+    d'origine, et \textbf{généralisable à plusieurs langages / frameworks} cibles.
+  \end{infobox}
+  \vspace{1em}
+  \begin{center}
+  
+  \end{center}
+  \begin{center}
+  \end{center}
+\end{frame}
+
+% ============================================================
+\section{Objectifs spécifiques}
+\begin{frame}{Objectifs spécifiques}
+  \begin{itemize}
+    \setlength{\itemsep}{0.6em}
+    \item[\textbf{1.}] \textbf{Identifier} les  métriques mesurables d'une
+      maquette haute fidélité (grille, marges, palette, échelle typographique,
+      positions des éléments).
+    \item[\textbf{2.}] \textbf{Concevoir} un modèle structurel intermédiaire (qui est la representation hierachique sous forme d'arbre des differents elements de notre maquette) représentant fidèlement l'organisation de la maquette.
+    \item[\textbf{3.}] \textbf{Déterminer} une méthode permettant d'établir les liaisons et les relations entre éléments dans notre model de façon fiable.
+    \item[\textbf{4.}] \textbf{Développer} un mécanisme de génération de code à partir de ce
+      modèle, adaptable à plusieurs langages de programmation ou framework.
+    \item[\textbf{5.}] \textbf{Évaluer} la fidélité et la qualité du code généré par rapport à la
+      maquette d'origine.
+  \end{itemize}
+\end{frame}
+
+% ============================================================
+\section{Questions de recherche}
+\begin{frame}{Questions de recherche}
+  \begin{itemize}[leftmargin=1.4em, itemsep=0.9em]
+    \item[\circnum{1}] \textbf{QR1} — Quelles  métriques
+      permettent de décrire objectivement une maquette haute fidélité ?
+    \item[\circnum{2}] \textbf{QR2} — Comment transformer une maquette (données
+      visuelles) en un modèle structuré  ?
+    \item[\circnum{3}] \textbf{QR3} — Quelles sont les differentes methodes permettent de déterminer fiablement les liaisons entre les
+      éléments d'une maquette ?
+    \item[\circnum{4}] \textbf{QR4} — Comment, à partir de ce modèle, générer du
+      code frontend fonctionnel et fidèle, dans différents langages ?
+  \end{itemize}
+  \vspace{0.8em}
+\end{frame}
+
+% ============================================================
+\section{Développements réalisés}
+\begin{frame}{Résumé — de la maquette aux metriques mesurables}
+  \small
+  \begin{block}{Caractérisation de la maquette}
+    \begin{itemize}
+      \item Dimension du canevas, marges, rythme vertical (grille de 8 px)
+      \item Palette de couleurs limitée et réutilisée
+      \item Échelle typographique restreinte (titre, sous-titre, corps)
+     
+    \end{itemize}
+  \end{block}
+  \begin{infobox}{Pourquoi c'est la première étape}
+    Ces métriques transforment une image (pixels) en un ensemble d'\textbf{éléments
+    mesurables} (position, taille, style) qui serviront de base à la construction d'un modèle structurel.
+  \end{infobox}
+\end{frame}
+
+\begin{frame}{determination des liaison entre les differents elements(methode de similarite)}
+  \small
+  Chaque paire d'éléments est comparée par un score combinant proximité spatiale et
+  ressemblance visuelle en ce basant sur les metriques qu'on a eu a detecter dans la maquette. La formule de similarité est donnée par :
+  \[
+    \sigma(b_i,b_j) = \alpha \cdot \text{sim}_{\text{geo}}(b_i,b_j) + \beta \cdot \text{sim}_{\text{sem}}(b_i,b_j)
+  \]
+ 
+\end{frame}
+
+% ============================================================\section{Conclusion et perspectives}
+\begin{frame}{Conclusion}
+  \begin{infobox}{Ce qui a été établi}
+    Nous avons défini les différentes métriques d'une maquette
+    haute fidélité, et, dans le but de concevoir notre modèle, nous avons étudié la
+    relation entre les éléments de notre maquette UX à travers une méthode de calcul
+    de similarité.
+  \end{infobox}
+  \vspace{0.6em}
+  Cette étape pose les fondations nécessaires à la construction du modèle structurel
+  puis à la génération automatique de code frontend.
+\end{frame}
+
+\begin{frame}{Perspectives}
+  \begin{itemize}[leftmargin=1.2em, itemsep=0.7em]
+    \item \textbf{Explorer d'autres méthodes} de calcul de similarité proposées
+      dans la littérature (différents articles de recherche).
+    \item \textbf{Comparer ces méthodes} entre elles et adapter, dans un premier
+      temps, la plus pertinente à notre cas d'étude.
+    \item \textbf{Déterminer notre modèle} définitif à partir de la méthode retenue.
+    \item \textbf{Étudier la génération de code} : comment produire, à partir de ce
+      modèle, plusieurs versions de code dans différents langages.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    {\Huge\bfseries\color{navy} Merci}\\[1em]
+    {\large Questions ?}
+  \end{center}
+\end{frame}
+
+\end{document}

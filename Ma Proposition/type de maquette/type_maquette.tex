@@ -1,0 +1,174 @@
+\documentclass[11pt]{beamer}
+\usetheme{metropolis}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{array}
+
+\title{Type de maquette : web ou mobile ?}
+\subtitle{Justification du choix retenu pour la construction de l'arbre}
+\date{}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Sommaire}
+  \tableofcontents
+\end{frame}
+
+\section{La question posée}
+
+\begin{frame}{Deux options possibles}
+  Pour évaluer notre méthode de construction d'arbre, nous avons besoin
+  d'un type de maquette source précis.
+
+  \vspace{1em}
+
+  \begin{columns}
+    \column{0.5\textwidth}
+    \textbf{Mobile}
+    \begin{itemize}
+      \item Interfaces Android / iOS
+      \item Écrans plus simples
+      \item Datasets figés existants (RICO, AMP)
+    \end{itemize}
+
+    \column{0.5\textwidth}
+    \textbf{Web}
+    \begin{itemize}
+      \item Pages de sites réels
+      \item Mises en page riches et imbriquées
+      \item Vérité terrain accessible directement (DOM)
+    \end{itemize}
+  \end{columns}
+
+  \vspace{1em}
+  \textbf{Choix retenu : le web.} Les sections suivantes justifient ce choix.
+\end{frame}
+
+\section{Argument 1 --- La complexité correspond à notre problème de recherche}
+
+\begin{frame}{Le vide identifié dès le départ}
+  Notre point de départ (limite de DeclarUI) :
+
+  \begin{quote}
+    Échec sur le \textbf{regroupement d'éléments en sections et listes
+    complexes} à l'intérieur d'une page.
+  \end{quote}
+
+  \vspace{1em}
+  Une interface mobile est en général :
+  \begin{itemize}
+    \item plus \textbf{plate} (défilement vertical simple)
+    \item avec peu de colonnes simultanées
+    \item avec moins d'éléments visibles en même temps
+  \end{itemize}
+
+  \vspace{1em}
+  \alert{Choisir le mobile reviendrait à choisir le cas le plus simple, alors
+  que notre problème de recherche vise justement le cas complexe.}
+\end{frame}
+
+\begin{frame}{Preuve chiffrée --- DCGen (Divide-and-Conquer)}
+  Statistiques mesurées par DCGen sur un jeu de données de sites web réels :
+
+  \vspace{1em}
+  \begin{table}
+    \centering
+    \begin{tabular}{lccc}
+      \toprule
+      Métrique & Min & Max & Moyenne \\
+      \midrule
+      Longueur (tokens) & 383 & 868\,108 & 99\,431 \\
+      Nombre de balises & 2 & 16\,331 & 961 \\
+      Profondeur du DOM & 2 & 40 & 17 \\
+      Balises uniques & 2 & 66 & 26 \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{1em}
+  \textbf{Une profondeur moyenne de 17 niveaux d'imbrication} : exactement le
+  type de structure que notre séparation géométrie/sens doit savoir gérer.
+\end{frame}
+
+\section{Argument 2 --- La collecte de vérité terrain}
+
+\begin{frame}{Vérité terrain : un besoin central de l'évaluation}
+  Pour mesurer la qualité de notre arbre (Tree Edit Distance, Container
+  Match, TreeBLEU\dots), il faut un \textbf{arbre de référence} auquel se
+  comparer.
+
+  \vspace{1em}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \textbf{Web}
+    \begin{itemize}
+      \item Le DOM est directement lisible
+      \item Accessible sur des milliers de sites, gratuitement
+      \item Aucun outil spécialisé requis
+    \end{itemize}
+
+    \column{0.5\textwidth}
+    \textbf{Mobile}
+    \begin{itemize}
+      \item Nécessite la décompilation d'APK
+      \item Ou des outils d'accessibilité complexes
+      \item Dépendance à des datasets déjà figés
+    \end{itemize}
+  \end{columns}
+
+  \vspace{1em}
+  \alert{Avec un calendrier serré (soutenance fin novembre), la simplicité de
+  collecte du web est un critère décisif.}
+\end{frame}
+
+\section{Argument 3 --- Cohérence avec les choix déjà faits}
+
+\begin{frame}{Tout notre travail pointe déjà vers le web}
+  \begin{itemize}
+    \item Notre détecteur retenu (ImageCLEF DrawnUI 2021, tâche Screenshot)
+      est entraîné sur \textbf{9\,630 captures de sites web réels}
+    \item La limite que nous avions nous-mêmes notée sur Screen Parsing :
+      \textit{``entraîné sur mobile (AMP/RICO) --- à vérifier sur des
+      maquettes web''}
+    \item Les deux méthodes les plus proches de notre approche
+      (\textbf{Prototype2Code}, \textbf{DCGen}) travaillent toutes les deux
+      sur des captures de sites web
+  \end{itemize}
+
+  \vspace{1em}
+  \alert{Basculer vers le mobile obligerait à reprendre le détecteur, les
+  données de comparaison et une partie de l'état de l'art déjà construit.}
+\end{frame}
+
+\section{Synthèse}
+
+\begin{frame}{Synthèse}
+  \begin{table}
+    \centering
+    \begin{tabular}{lp{7.5cm}}
+      \toprule
+      Argument & Constat \\
+      \midrule
+      Complexité & Le web correspond au vide de recherche identifié \\
+      Vérité terrain & Le DOM est directement accessible, sans outil lourd \\
+      Cohérence & Détecteur, état de l'art et travaux proches sont déjà sur le web \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{1.5em}
+  \centering
+  \Large \textbf{Choix retenu : maquettes web}
+\end{frame}
+
+\begin{frame}[standout]
+  Merci --- questions et retours bienvenus
+\end{frame}
+
+\end{document}

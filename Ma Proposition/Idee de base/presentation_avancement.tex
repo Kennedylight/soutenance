@@ -1,0 +1,205 @@
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usetheme{metropolis}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+\usepackage{array}
+
+\definecolor{mathblue}{RGB}{41,98,158}
+\definecolor{aicoral}{RGB}{214,93,74}
+\definecolor{aipurple}{RGB}{130,90,160}
+\definecolor{softgray}{RGB}{110,110,110}
+\definecolor{darkbg}{RGB}{30,33,36}
+
+\setbeamercolor{palette primary}{bg=mathblue, fg=white}
+\setbeamercolor{frametitle}{bg=mathblue, fg=white}
+\setbeamercolor{progress bar}{fg=aicoral, bg=softgray!25}
+\setbeamercolor{alerted text}{fg=aicoral}
+\setbeamertemplate{frame footer}{}
+\metroset{sectionpage=progressbar, numbering=fraction}
+
+\title{Construction d'un arbre hiérarchique hybride}
+\subtitle{Génération de code frontend à partir de maquettes UX \\ \small Point d'avancement méthodologique}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Sommaire}
+  \tableofcontents
+\end{frame}
+
+\section{Contexte et objectif}
+
+\begin{frame}{Le pipeline général}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=softgray, line width=0.6pt,
+                minimum width=2.8cm, minimum height=1.2cm, align=center, font=\small},
+    arr/.style={-{Latex[length=2.4mm]}, line width=0.8pt, draw=softgray}
+  ]
+  \node[box, fill=softgray!12] (m) {Maquette};
+  \node[box, fill=aicoral!15, right=1cm of m] (d) {Détection};
+  \node[box, fill=mathblue!15, right=1cm of d] (a) {Arbre};
+  \node[box, fill=aipurple!15, right=1cm of a] (c) {Code};
+  \draw[arr] (m) -- (d);
+  \draw[arr] (d) -- (a);
+  \draw[arr] (a) -- (c);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{6mm}
+  \begin{center}
+  \begin{minipage}{0.85\textwidth}
+  \centering
+  Toute méthode passe par un modèle structuré intermédiaire : \alert{l'arbre hiérarchique}. \\[4pt]
+  \small La qualité du code final dépend presque entièrement de la qualité de cet arbre.
+  \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Objectif du mémoire}
+  \begin{itemize}
+    \item Se concentrer sur l'étape la plus fragile du pipeline : \alert{la construction de l'arbre}
+    \item Proposer une méthode \textbf{hybride}, combinant précision géométrique et compréhension sémantique
+    \item Livrables : un article de recherche \textbf{et} sa soutenance orale
+  \end{itemize}
+\end{frame}
+
+\section{Le problème de recherche}
+
+\begin{frame}{Deux familles, deux défauts opposés}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Modèles multimodaux (MLLM)}
+        Comprennent bien le \textbf{sens} des éléments \\[2pt]
+        \alert{Hallucinent leur position} exacte
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Méthodes mathématiques}
+        Précises sur la \textbf{position} \\[2pt]
+        \alert{Aveugles au sens} des éléments
+      \end{block}
+    \end{column}
+  \end{columns}
+  \vspace{8mm}
+  \begin{center}
+  \small Aucun travail existant ne sépare complètement et strictement ces deux rôles.
+  \end{center}
+\end{frame}
+
+\section{État de l'art étudié}
+
+\begin{frame}{Trois travaux de référence}
+  \small
+  \renewcommand{\arraystretch}{1.6}
+  \begin{tabular}{@{}p{2.1cm}p{3.6cm}p{5.6cm}@{}}
+    \toprule
+    \textbf{Travail} & \textbf{Approche} & \textbf{Limite identifiée} \\
+    \midrule
+    DeclarUI & Vision par ordinateur + MLLM & Échoue sur les regroupements complexes (sections, listes) ; centré sur la navigation entre pages \\
+    ReverseORC & Découpage géométrique récursif (XY-Cut), depuis API d'accessibilité & Aucune étape sémantique ; ne part pas d'une image \\
+    DesignCoder & Arbre construit par l'IA en premier, géométrie calculée ensuite & Ordre inverse du nôtre ; dépend de métadonnées déjà connues \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Le vide identifié}
+  \begin{center}
+  \Large Aucune méthode ne garantit à la fois : \\[6mm]
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \centering
+      \large \textcolor{mathblue}{\textbf{100\% de précision}}\\ \small sur les positions
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \large \textcolor{aicoral}{\textbf{une vraie compréhension}}\\ \small des sections et listes complexes
+    \end{column}
+  \end{columns}
+  \end{center}
+\end{frame}
+
+\section{Notre proposition}
+
+\begin{frame}{Une séparation stricte en deux temps}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=10mm and 14mm,
+    box/.style={rectangle, rounded corners=5pt, draw=softgray, line width=0.6pt,
+                minimum width=4.6cm, minimum height=1.8cm, align=center, font=\small},
+    mathbox/.style={box, fill=mathblue!12, draw=mathblue},
+    aibox/.style={box, fill=aicoral!12, draw=aicoral},
+    arr/.style={-{Latex[length=2.6mm]}, line width=0.9pt, draw=softgray}
+  ]
+  \node[mathbox] (math) {\textbf{Étape 1}\\[3pt] Construction \emph{mathématique}\\ de l'arbre complet};
+  \node[aibox, right=of math] (ai) {\textbf{Étape 2}\\[3pt] L'IA \emph{étiquette} les nœuds\\ déjà construits};
+  \draw[arr] (math) -- (ai);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{6mm}
+  \begin{center}
+  \alert{L'IA ne modifie jamais une position} --- elle attache seulement un nom. \\[4pt]
+  \small C'est l'inverse exact de l'ordre choisi par DesignCoder.
+  \end{center}
+\end{frame}
+
+\begin{frame}{Pourquoi cet ordre}
+  \begin{itemize}
+    \item Le calcul garantit une structure \textbf{fiable et déterministe}
+    \item L'IA n'a plus qu'un seul rôle simple : \textbf{nommer}, jamais positionner
+    \item Les erreurs de raisonnement du MLLM ne peuvent plus contaminer la géométrie
+    \item Approche \textbf{nouvelle}, pas une amélioration incrémentale d'un travail existant
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Deux niveaux d'ambition pour l'étiquetage}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Option A --- priorité}
+        Étiquetage sémantique simple de chaque nœud déjà construit
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Option B --- bonus}
+        Détecter les sous-arbres similaires \\ $\rightarrow$ composants réutilisables
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+  \vspace{6mm}
+  \small \centering L'Option A est développée et validée en premier pour garantir un résultat défendable dans les délais.
+\end{frame}
+
+\section{Avancement et prochaines étapes}
+
+\begin{frame}{Où nous en sommes}
+  \begin{enumerate}
+    \item \textcolor{mathblue}{\textbf{Cadrage du sujet}} --- terminé \checkmark
+    \item \alert{\textbf{Définition formelle de la structure de l'arbre}} --- en cours
+    \item Construction de l'algorithme géométrique
+    \item Intégration de l'étiquetage sémantique
+    \item Préparation des données de test
+    \item Mesure des résultats
+    \item Rédaction de l'article
+    \item Relecture et finalisation
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Prochaine étape}
+  \begin{center}
+  \Large Définir précisément ce que doit contenir\\ un \alert{nœud} de notre arbre
+  \\[6mm]
+  \small en s'appuyant sur les structures déjà étudiées \\ (ReverseORC, DesignCoder)
+  \end{center}
+\end{frame}
+
+\begin{frame}[standout]
+  Merci --- questions et retours bienvenus
+\end{frame}
+
+\end{document}

@@ -1,0 +1,690 @@
+
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{hyperref}
+
+\newcommand{\method}[1]{\textbf{#1}}
+\newcommand{\source}[1]{\scriptsize\textcolor{gray}{Source : #1}}
+
+\title{De la maquette à une représentation hiérarchique}
+\subtitle{Étude comparative de quatre approches de génération de code frontend}
+
+\author{KOUONGA TADIE KENNEDY}
+\institute{Universite de DOUALA}
+\date{Jeudi 6 août 2026}
+\begin{document}
+
+% ------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Question de recherche}
+\begin{block}{Problème étudié}
+Comment passer d'une représentation visuelle d'une interface
+(maquette, capture d'écran, croquis, etc.) à une
+\textbf{représentation structurée et hiérarchique} qui pourra ensuite
+servir à générer automatiquement du code frontend ?
+\end{block}
+
+\vspace{0.5cm}
+
+\centering
+\begin{tikzpicture}[node distance=1.1cm,align=center, every node/.style={font=\small}]
+\node[draw, rounded corners, minimum width=2.7cm, minimum height=1cm] (input)
+{Maquette /\\capture / croquis};
+\node[draw, rounded corners, minimum width=3.0cm, minimum height=1cm, right=of input]
+(model) {Modèle\\hiérarchique};
+\node[draw, rounded corners, minimum width=2.7cm, minimum height=1cm, right=of model]
+(code) {Code frontend};
+\draw[-{Latex},thick] (input) -- (model);
+\draw[-{Latex},thick] (model) -- (code);
+\end{tikzpicture}
+
+\vspace{0.3cm}
+\source{Problématique de recherche ; travaux étudiés}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Pourquoi passer par une représentation intermédiaire ?}
+\begin{itemize}
+  \item Une image décrit surtout \textbf{ce que l'on voit}.
+  \item Le code doit également exprimer \textbf{comment les éléments sont organisés}.
+  \item Il faut donc retrouver :
+  \begin{itemize}
+    \item les éléments de l'interface ;
+    \item leurs relations ;
+    \item leur organisation spatiale ;
+    \item et, selon la méthode, leurs comportements de mise en page.
+  \end{itemize}
+  \item Les quatre travaux étudiés ne construisent cependant pas tous le même type de représentation.
+\end{itemize}
+
+\vspace{0.25cm}
+\begin{alertblock}{Point important}
+Dans cette étude, « représentation hiérarchique » est utilisé au sens large :
+arbre de composants, arbre de mise en page, arbre de subdivisions ou
+structure de mise en page avec contraintes.
+\end{alertblock}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Les quatre approches étudiées}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} X}
+\toprule
+\textbf{Approche} & \textbf{Idée principale pour structurer l'interface}\\
+\midrule
+Prototype2Code & Reconstruire une hiérarchie à partir des relations de contenance, puis organiser les éléments en lignes/colonnes.\\
+DCGen & Diviser récursivement l'image en segments ; la division elle-même forme un arbre.\\
+ScreenCoder & Détecter et nommer les grandes régions, puis construire un arbre de mise en page à partir de règles de conception web.\\
+DesignCoder & Diviser l'interface, extraire le sens des éléments, puis les regrouper dans un arbre de composants.\\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.25cm}
+\source{Synthèse des quatre documents fournis}
+\end{frame}
+
+% =================================================
+\section{Prototype2Code}
+
+\begin{frame}{1. Prototype2Code : partir des relations de contenance}
+\begin{block}{Entrée}
+Une maquette contenant des éléments visuels et des informations de conception.
+\end{block}
+
+\begin{enumerate}
+  \item Nettoyer les informations issues de la maquette.
+  \item Identifier les groupes et les éléments terminaux.
+  \item Déterminer quels éléments sont contenus dans quels groupes.
+  \item Construire un arbre de groupes imbriqués.
+  \item Organiser ensuite les enfants en \textbf{Row} ou \textbf{Column}.
+\end{enumerate}
+
+\source{Document fourni sur Prototype2Code}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Prototype2Code : construction du modèle}
+\centering
+\begin{tikzpicture}[
+  node/.style={draw, rounded corners, minimum height=0.65cm, minimum width=1.8cm,align=center, font=\scriptsize},
+  arrow/.style={-{Latex}, thick}
+]
+\node[node] (groups) {Groupes détectés};
+\node[node, right=1.5cm of groups] (contain) {Relations de\\contenance};
+\node[node, right=1.5cm of contain] (tree) {Arbre initial};
+\node[node, below=1.0cm of tree] (rowcol) {Segmentation\\Row / Column};
+\node[node, left=1.5cm of rowcol] (responsive) {Mise en page\\adaptative};
+
+\draw[arrow] (groups) -- (contain);
+\draw[arrow] (contain) -- (tree);
+\draw[arrow] (tree) -- (rowcol);
+\draw[arrow] (rowcol) -- (responsive);
+\end{tikzpicture}
+
+\vspace{0.5cm}
+\begin{itemize}
+  \item La hiérarchie repose d'abord sur la \textbf{géométrie de la maquette}.
+  \item Les éléments sont placés sous le plus petit groupe qui les contient.
+  \item Les chevauchements peuvent conduire à un nœud utilisant un positionnement absolu.
+  \item La seconde phase cherche une organisation compatible avec Flexbox.
+\end{itemize}
+
+\source{Document Prototype2Code fourni, section sur l'UI Layout Tree}
+\end{frame}
+
+% =================================================
+\section{DCGen}
+
+\begin{frame}{2. DCGen : construire un arbre en divisant l'image}
+\begin{block}{Idée centrale}
+Au lieu d'essayer de comprendre toute la page en une seule fois,
+DCGen cherche des \textbf{lignes de séparation} et découpe récursivement
+la capture en parties plus simples.
+\end{block}
+
+\begin{enumerate}
+  \item Détecter des séparations horizontales et verticales.
+  \item Découper l'image en segments.
+  \item Répéter le découpage sur les segments obtenus.
+  \item Stocker ces divisions sous forme d'un arbre.
+  \item Générer le code des petites parties puis les réassembler.
+\end{enumerate}
+
+\source{Wan et al., 2025}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{DCGen : la hiérarchie représente les divisions}
+\centering
+\begin{tikzpicture}[
+  every node/.style={draw, rounded corners, minimum width=1.8cm, minimum height=0.55cm, font=\scriptsize, align=center},
+  edge from parent/.style={draw,-{Latex},thick},
+  level 1/.style={sibling distance=4.0cm},
+  level 2/.style={sibling distance=2.0cm}
+]
+\node {Capture complète}
+ child {node {Segment A}
+   child {node {A1}}
+   child {node {A2}}
+ }
+ child {node {Segment B}
+   child {node {B1}}
+   child {node {B2}}
+ };
+\end{tikzpicture}
+
+\vspace{0.35cm}
+\begin{itemize}
+  \item Le nœud parent représente une zone avant sa subdivision.
+  \item Les feuilles représentent les plus petites zones obtenues.
+  \item L'arbre sert ensuite à reconstruire progressivement le code de la page.
+\end{itemize}
+
+\begin{alertblock}{Différence importante}
+Ici, l'arbre décrit d'abord une \textbf{décomposition spatiale de l'image},
+et non une compréhension sémantique complète des composants.
+\end{alertblock}
+\end{frame}
+
+
+
+% =================================================
+\section{ScreenCoder}
+
+\begin{frame}{3. ScreenCoder : détecter, planifier}
+
+\begin{block}{Idée centrale}
+ScreenCoder décompose la génération d'interface en trois étapes :
+\textbf{comprendre visuellement}, \textbf{construire la structure}, puis
+\textbf{générer le code}.
+\end{block}
+
+\begin{enumerate}
+\item \textbf{Grounding : comprendre l'interface avec un MLLM}
+
+
+Le \textbf{MLLM} analyse la capture d'écran pour identifier les
+regroupements visuels importants et leur attribuer un rôle :
+\textit{header, sidebar, navigation, contenu, etc.}
+
+Pour chaque région détectée, il fournit une
+\textbf{bounding box} définie par :
+\[
+(x,y,width,height)
+\]
+
+\item \textbf{Planning : construire l'arbre de mise en page}
+
+Les régions détectées sont ensuite organisées à partir de leurs
+\textbf{positions et dimensions}. Les relations spatiales entre les
+bounding boxes permettent de déterminer la hiérarchie :
+quelles régions contiennent d'autres régions et quelles régions sont
+placées côte à côte.
+
+On obtient ainsi un \textbf{arbre de mise en page hiérarchique},
+proche de la structure d'un DOM.
+
+
+
+\end{enumerate}
+
+\begin{center}
+\textit{Capture d'écran}
+$\rightarrow$
+\textbf{MLLM + bounding boxes}
+$\rightarrow$
+\textbf{arbre de mise en page}
+$\rightarrow$
+\textbf{HTML/CSS}
+\end{center}
+
+\source{Jiang et al., ScreenCoder}
+\end{frame}
+
+
+% ------------------------------------------------
+\begin{frame}{ScreenCoder : comment le modèle est construit ?}
+\centering
+\begin{tikzpicture}[
+  node/.style={draw, rounded corners, minimum width=2.6cm, minimum height=0.75cm, font=\scriptsize, align=center},
+  arrow/.style={-{Latex}, thick}
+]
+\node[node] (input) {Screenshot /\\Design sketch};
+\node[node, right=1.0cm of input] (ground) {Régions +\\labels + positions};
+\node[node, right=1.0cm of ground] (plan) {Arbre de\\mise en page};
+\node[node, right=1.0cm of plan] (code) {HTML + CSS};
+
+\draw[arrow] (input) -- (ground);
+\draw[arrow] (ground) -- (plan);
+\draw[arrow] (plan) -- (code);
+\end{tikzpicture}
+
+\vspace{0.45cm}
+\begin{itemize}
+  \item Le planning convertit ces informations 2D en une structure de type DOM.
+  \item Les coordonnées sont normalisées en pourcentage pour aider à préserver la structure.
+  \item Les conteneurs internes peuvent être organisés avec des mécanismes de mise en page comme Grid.
+\end{itemize}
+
+\source{ScreenCoder, sections Grounding et Planning}
+\end{frame}
+
+% =================================================
+\section{DesignCoder}
+\begin{frame}{4. DesignCoder : comprendre les composants avant l'arbre}
+
+\begin{block}{Idée centrale}
+DesignCoder ne se limite pas à la position des éléments :
+il cherche à comprendre leur \textbf{rôle} et leur \textbf{contexte}
+avant de construire la hiérarchie des composants.
+\end{block}
+
+\begin{enumerate}
+
+\item \textbf{Entrée : image + métadonnées}
+
+La maquette fournit une image ainsi que les métadonnées de chaque
+élément :
+[
+(id,\ type,\ bbox,\ style)
+]
+
+La \textit{bbox} indique notamment la position et les dimensions
+de l'élément.
+
+\item \textbf{UI Division : découper l'interface en régions}
+
+Le \textbf{MLLM analyse l'image et les métadonnées} pour diviser
+l'interface en sous-régions cohérentes.
+
+Une région correspond à un \textbf{ensemble d'éléments liés par leur
+rôle ou leur fonction}, par exemple une barre de recherche,
+une bannière ou une barre de navigation.
+
+\item \textbf{Semantic Extraction : comprendre chaque élément}
+
+Le MLLM observe chaque élément dans son contexte visuel et décrit
+sa \textbf{fonction et son rôle}.
+
+\begin{center}
+\textit{Exemple : « cette icône représente une recherche »}
+\end{center}
+
+\end{enumerate}
+
+\vspace{0.2cm}
+
+\begin{center}
+\textbf{Image + métadonnées}
+$\rightarrow$
+\textbf{Régions}
+$\rightarrow$
+\textbf{Sémantique des éléments}
+\end{center}
+
+\source{Chen et al., DesignCoder}
+\end{frame}
+
+
+\begin{frame}{DesignCoder : du regroupement à l'arbre de composants}
+
+\begin{block}{Component Grouping}
+Après avoir identifié les régions et compris le rôle des éléments,
+le MLLM regroupe les éléments selon plusieurs relations.
+\end{block}
+
+\begin{itemize}
+
+\item \textbf{Relations spatiales} :
+position, proximité, alignement et organisation des éléments.
+
+\item \textbf{Relations sémantiques} :
+éléments ayant un rôle ou un sens commun.
+
+\item \textbf{Relations fonctionnelles} :
+éléments participant à une même fonctionnalité.
+
+\end{itemize}
+
+\vspace{0.15cm}
+
+\begin{block}{Construction de l'arbre}
+Le regroupement transforme la liste plate des éléments en une
+\textbf{hiérarchie de composants}.
+
+Les composants regroupés deviennent des \textbf{nœuds parents},
+et les éléments qui les composent deviennent leurs \textbf{enfants}.
+\end{block}
+
+\vspace{0.15cm}
+
+
+\vspace{0.1cm}
+
+\begin{center}
+\textbf{Position / bbox}
+$+$
+\textbf{contexte visuel}
+$+$
+\textbf{sémantique}
+$+$
+\textbf{fonction}
+$\Rightarrow$
+\textbf{regroupement}
+$\Rightarrow$
+\textbf{arbre}
+\end{center}
+
+\source{Chen et al., DesignCoder}
+\end{frame}
+
+
+% ------------------------------------------------
+
+\begin{frame}{DesignCoder : comment les éléments deviennent un arbre ?}
+
+\centering
+
+\begin{tikzpicture}[
+node distance=0.65cm and 0.55cm,
+box/.style={
+draw,
+rounded corners,
+minimum width=2.45cm,
+minimum height=0.72cm,
+font=\scriptsize,
+align=center
+},
+arrow/.style={
+-{Latex},
+thick
+}
+]
+
+\node[box] (input) {Image + métadonnées};
+
+\node[box, below=of input] (division) {
+
+Régions sémantiques
+};
+
+\node[box, right=1.0cm of division] (semantic) {
+
+Rôle de chaque élément
+};
+
+\node[box, right=1.0cm of semantic] (group) {
+ Relations entre éléments
+};
+
+\node[box, below=of group] (tree) {
+Hiérarchie des composants
+};
+
+\draw[arrow] (input) -- (division);
+\draw[arrow] (division) -- (semantic);
+\draw[arrow] (semantic) -- (group);
+\draw[arrow] (group) -- (tree);
+
+\end{tikzpicture}
+
+\vspace{0.35cm}
+
+\begin{block}{Ce qui détermine le regroupement}
+\centering
+\textbf{Position / bbox}
+\quad + \quad
+\textbf{Sens visuel}
+\quad + \quad
+\textbf{Fonction}
+\quad
+$\Longrightarrow$
+\quad
+\textbf{Composant}
+\end{block}
+
+\begin{itemize}
+\item La \textbf{bbox} fournit la position et les dimensions des éléments.
+\item Le \textbf{MLLM} interprète leur rôle et leur contexte visuel.
+\item Les relations \textbf{spatiales, sémantiques et fonctionnelles}
+guident le regroupement.
+\item Le regroupement produit finalement un
+\textbf{arbre hiérarchique de composants}.
+\end{itemize}
+
+\source{DesignCoder, UI Grouping Chain}
+\end{frame}
+
+
+
+
+% =================================================
+\section{Comparaison}
+
+\begin{frame}{Comparaison : quelle information permet de construire la hiérarchie ?}
+\scriptsize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm} X X}
+\toprule
+\textbf{Méthode} & \textbf{Principe de construction} & \textbf{Information dominante}\\
+\midrule
+Prototype2Code &
+Relations de contenance puis Row/Column &
+Géométrie + structure de la maquette\\
+DCGen &
+Découpage récursif de l'image &
+Séparations et organisation spatiale\\
+ScreenCoder &
+Détection de régions puis mapping vers un arbre &
+Régions nommées + positions + règles frontend\\
+DesignCoder &
+Division + sémantique + regroupement &
+Sémantique + relations spatiales/fonctionnelles + métadonnées\\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.35cm}
+\begin{block}{Constat}
+Les méthodes cherchent toutes à retrouver une structure, mais
+\textbf{elles ne cherchent pas exactement la même structure}.
+\end{block}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Comparaison : nature de la représentation obtenue}
+\scriptsize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm} X X}
+\toprule
+\textbf{Méthode} & \textbf{Représentation intermédiaire} & \textbf{Rôle pour le code}\\
+\midrule
+Prototype2Code &
+Arbre de mise en page avec groupes et Row/Column &
+Guide l'imbrication HTML et les styles Flexbox/positionnement\\
+DCGen &
+Arbre de subdivisions de l'image &
+Guide l'assemblage progressif du code\\
+ScreenCoder &
+Arbre de layout de type DOM &
+arbre de composants pour HTML/CSS\\
+DesignCoder &
+Arbre hiérarchique de composants enrichi par les styles &
+Guide la génération structurée des composants et du CSS\\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.3cm}
+\source{Synthèse des documents étudiés}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Comparaison : points forts et limites}
+\scriptsize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.4cm} X X}
+\toprule
+\textbf{Méthode} & \textbf{Point fort pour notre problème} & \textbf{Limite / difficulté}\\
+\midrule
+Prototype2Code &
+Modèle directement orienté vers la mise en page et le code &
+Dépend fortement des informations de conception et de règles géométriques\\
+DCGen &
+Obtient une hiérarchie même à partir d'une capture d'écran &
+L'arbre représente surtout les divisions spatiales, pas nécessairement les composants sémantiques\\
+ScreenCoder &
+Sépare clairement perception, structure et génération &
+Le planning repose sur des connaissances de mise en page web\\
+DesignCoder &
+Combine géométrie, sémantique et hiérarchie de composants &
+Dépend d'un traitement multimodal et d'informations de design riches\\
+\bottomrule
+\end{tabularx}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Ce que les quatre méthodes ont en commun}
+\begin{enumerate}
+  \item \textbf{Identifier des unités de l'interface} : éléments, régions ou widgets.
+  \item \textbf{Déterminer des relations} entre ces unités.
+  \item \textbf{Construire une structure} permettant de ne plus traiter l'interface comme une simple image plate.
+  \item \textbf{Utiliser cette structure} pour faciliter la génération ou la reconstruction du code.
+\end{enumerate}
+
+\vspace{0.35cm}
+\centering
+\begin{tikzpicture}[node distance=0.9cm, every node/.style={font=\small}]
+\node[draw,rounded corners,minimum width=2.2cm] (detect) {Détecter};
+\node[draw,rounded corners,minimum width=2.2cm,right=of detect] (rel) {Relier};
+\node[draw,rounded corners,minimum width=2.2cm,right=of rel] (struct) {Structurer};
+\node[draw,rounded corners,minimum width=2.2cm,right=of struct] (generate) {Générer};
+\draw[-{Latex},thick] (detect)--(rel);
+\draw[-{Latex},thick] (rel)--(struct);
+\draw[-{Latex},thick] (struct)--(generate);
+\end{tikzpicture}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Ce qui différencie réellement les approches}
+\begin{itemize}
+  \item \textbf{Qu'est-ce qui est détecté ?}
+  \begin{itemize}
+    \item éléments visuels ;
+    \item régions ;
+    \item groupes ;
+    \item widgets ;
+    \item ou simplement zones de l'image.
+  \end{itemize}
+  \item \textbf{Comment la relation parent--enfant est-elle déterminée ?}
+  \begin{itemize}
+    \item contenance géométrique ;
+    \item découpage spatial ;
+    \item raisonnement sémantique ;
+    \item règles de mise en page ;
+  \end{itemize}
+  \item \textbf{Que doit représenter le modèle ?}
+  \begin{itemize}
+    \item la structure visuelle ;
+    \item les composants ;
+    \item la mise en page ;
+    \item ou plusieurs de ces aspects.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Lecture des méthodes par rapport à notre question}
+\begin{block}{Notre objectif}
+Obtenir une représentation intermédiaire suffisamment riche pour
+permettre ensuite de générer du code frontend.
+\end{block}
+
+\vspace{0.2cm}
+\begin{itemize}
+  \item \method{Prototype2Code} montre l'intérêt d'un arbre orienté mise en page.
+  \item \method{DCGen} montre qu'une hiérarchie peut émerger directement d'une décomposition de l'image.
+  \item \method{ScreenCoder} montre l'intérêt de séparer \textbf{détection} et \textbf{construction de la structure}.
+  \item \method{DesignCoder} montre l'intérêt d'ajouter la \textbf{sémantique} aux informations géométriques pour construire une hiérarchie de composants.
+\end{itemize}
+
+\begin{alertblock}{Question qui se dégage}
+Quel niveau d'information doit contenir notre modèle pour être
+indépendant de la technologie cible tout en restant suffisamment riche
+pour générer ensuite React, HTML/CSS, Flutter, etc. ?
+\end{alertblock}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Conclusion}
+\begin{block}{Conclusion de l'étude}
+Les travaux étudiés convergent vers une même idée :
+\textbf{la maquette doit être transformée en une représentation structurée
+avant de produire le code}.
+\end{block}
+
+\vspace{0.25cm}
+Mais plusieurs stratégies existent :
+\begin{itemize}
+  \item \textbf{géométrique} : reconstruire les relations de contenance ;
+  \item \textbf{spatiale} : découper récursivement l'image ;
+  \item \textbf{structurelle} : convertir les régions en arbre de layout ;
+  \item \textbf{sémantique} : comprendre les rôles et relations des composants.
+\end{itemize}
+
+\vspace{0.2cm}
+\centering
+\textbf{La problématique devient alors : quelle combinaison de ces informations
+est nécessaire pour définir un modèle intermédiaire adapté à la génération
+multi-technologies ?}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Références principales}
+\footnotesize
+\begin{thebibliography}{99}
+
+\bibitem{prototype}
+S. Xiao, Y. Chen, J. Li, L. Chen, T. Zhou.
+\newblock \emph{Prototype2Code: End-to-end Front-end Code Generation from UI Design Prototypes}.
+\newblock arXiv:2405.04975, 2024.
+\newblock \url{https://arxiv.org/abs/2405.04975}
+
+\bibitem{dcgen}
+Y. Wan, C. Wang, Y. Dong, W. Wang, S. Li, Y. Huo, M. Lyu.
+\newblock \emph{Divide-and-Conquer: Generating UI Code from Screenshots}.
+\newblock Proc. ACM Software Engineering, FSE, 2025.
+\newblock \url{https://doi.org/10.1145/3729364}
+
+
+
+\bibitem{screencoder}
+Y. Jiang, Y. Zheng, Y. Wan, J. Han, Q. Wang, M. R. Lyu, X. Yue.
+\newblock \emph{ScreenCoder: Advancing Visual-to-Code Generation for Front-End Automation via Modular Multimodal Agents}.
+\newblock arXiv:2507.22827, 2025.
+\newblock \url{https://arxiv.org/abs/2507.22827}
+
+\bibitem{designcoder}
+Y. Chen, S. Ding, Y. Zhang, W. Chen, J. Du, L. Sun, L. Chen.
+\newblock \emph{DesignCoder: Hierarchy-Aware and Self-Correcting UI Code Generation with Large Language Models}.
+\newblock arXiv:2506.13663, 2025.
+\newblock \url{https://arxiv.org/abs/2506.13663}
+
+\end{thebibliography}
+\end{frame}
+
+\end{document}

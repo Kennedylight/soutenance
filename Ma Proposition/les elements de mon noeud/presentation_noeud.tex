@@ -1,0 +1,181 @@
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usetheme{metropolis}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usepackage{array}
+
+\definecolor{mathblue}{RGB}{41,98,158}
+\definecolor{nodeteal}{RGB}{15,110,86}
+\definecolor{nodecoral}{RGB}{214,93,74}
+\definecolor{nodepurple}{RGB}{130,90,160}
+\definecolor{softgray}{RGB}{110,110,110}
+
+\setbeamercolor{palette primary}{bg=mathblue, fg=white}
+\setbeamercolor{frametitle}{bg=mathblue, fg=white}
+\setbeamercolor{progress bar}{fg=nodecoral, bg=softgray!25}
+\setbeamercolor{alerted text}{fg=nodecoral}
+\metroset{sectionpage=progressbar, numbering=fraction}
+
+\title{Structure d'un nœud de notre arbre}
+\subtitle{Origine et justification de chaque champ}
+\author{}
+\date{}
+
+\newcommand{\origine}[2]{%
+  \begin{tikzpicture}[remember picture]
+  \node[rectangle, rounded corners=4pt, fill=#1!15, draw=#1, line width=0.6pt, inner sep=6pt] {\small\textcolor{#1}{\textbf{Origine : #2}}};
+  \end{tikzpicture}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Sommaire}
+  \tableofcontents
+\end{frame}
+
+\section{Légende}
+
+\begin{frame}{Quatre origines possibles pour un champ}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.24\textwidth}
+      \begin{center}
+      \colorbox{softgray!15}{\textcolor{softgray}{\textbf{\phantom{x}Neutre\phantom{x}}}}\\[4pt]
+      \small structurel
+      \end{center}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \begin{center}
+      \colorbox{nodecoral!15}{\textcolor{nodecoral}{\textbf{\phantom{x}Détecteur\phantom{x}}}}\\[4pt]
+      \small position + type grossier
+      \end{center}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \begin{center}
+      \colorbox{nodeteal!15}{\textcolor{nodeteal}{\textbf{\phantom{x}Géométrie\phantom{x}}}}\\[4pt]
+      \small algorithme mathématique
+      \end{center}
+    \end{column}
+    \begin{column}{0.24\textwidth}
+      \begin{center}
+      \colorbox{nodepurple!15}{\textcolor{nodepurple}{\textbf{\phantom{x}MLLM\phantom{x}}}}\\[4pt]
+      \small sens précis
+      \end{center}
+    \end{column}
+  \end{columns}
+  \vspace{8mm}
+  \begin{center}
+  \small Chaque champ du nœud est rattaché à l'une de ces quatre origines --- jamais choisi au hasard.
+  \end{center}
+\end{frame}
+
+\section{Les sept champs}
+
+\begin{frame}{id}
+  \origine{softgray}{neutre / structurel}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Identifiant unique du nœud
+    \item Permet de faire correspondre deux arbres lors de l'évaluation (Tree Edit Distance, Container Match)
+    \item Sans lui, impossible de relier un enfant à son parent sans ambiguïté
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{bbox --- position (x, y, largeur, hauteur)}
+  \origine{nodecoral}{détecteur (feuille) / calcul (nœud interne)}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Pour une feuille : fournie directement par le détecteur
+    \item Pour un nœud interne : \textbf{calculée} en agrégeant les bbox des enfants
+    \item Le champ fondateur --- sans lui, ni découpage, ni rendu final
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{type grossier --- Texte / Image / Composant}
+  \origine{nodecoral}{détecteur}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Fourni par le détecteur, sans raisonnement, uniquement sur les feuilles
+    \item Sert d'\textbf{indice de départ} transmis au MLLM
+    \item Le MLLM affinera ce type grossier en un sens précis, jamais l'inverse
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{parent}
+  \origine{nodeteal}{algorithme géométrique}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Référence vers le nœud englobant
+    \item Permet de remonter jusqu'à la racine de l'arbre
+    \item Nécessaire pour fusionner deux groupes voisins quand un découpage s'avère accidentel
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{children --- liste ordonnée}
+  \origine{nodeteal}{algorithme géométrique}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Définit littéralement la hiérarchie elle-même
+    \item L'\textbf{ordre} porte le sens de lecture (gauche→droite, haut→bas)
+    \item Indispensable pour générer un code dans le bon ordre visuel
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{type géométrique --- Feuille / Row / Column}
+  \origine{nodeteal}{algorithme géométrique}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Indispensable à l'algorithme de découpage lui-même (XY-Cut)
+    \item Précise si un nœud est terminal ou un conteneur, et dans quel sens il a été coupé
+    \item Détermine ensuite le CSS à générer (flex-direction: row ou column)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{label sémantique}
+  \origine{nodepurple}{MLLM}
+  \vspace{6mm}
+  \begin{itemize}
+    \item Description ou nom attribué par le MLLM, en tout dernier
+    \item Rempli seulement une fois l'arbre géométrique entièrement figé
+    \item Notre \textbf{contribution centrale} --- sans lui, l'arbre reste aussi muet que Prototype2Code
+  \end{itemize}
+\end{frame}
+
+\section{Synthèse}
+
+\begin{frame}{Vue d'ensemble des sept champs}
+  \small
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{@{}p{3.4cm}p{2.6cm}p{6.5cm}@{}}
+    \toprule
+    \textbf{Champ} & \textbf{Origine} & \textbf{Rôle} \\
+    \midrule
+    id & \textcolor{softgray}{Neutre} & Correspondance entre arbres \\
+    bbox & \textcolor{nodecoral}{Détecteur} & Position exacte, agrégée pour les nœuds internes \\
+    type grossier & \textcolor{nodecoral}{Détecteur} & Indice de départ pour le MLLM \\
+    parent & \textcolor{nodeteal}{Géométrie} & Remontée et fusion \\
+    children & \textcolor{nodeteal}{Géométrie} & Définit la hiérarchie et l'ordre \\
+    type géométrique & \textcolor{nodeteal}{Géométrie} & Pilote le découpage et le CSS \\
+    label sémantique & \textcolor{nodepurple}{MLLM} & Contribution centrale \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Question ouverte avant d'augmenter la liste}
+  \begin{center}
+  \large Faut-il déjà ajouter des champs supplémentaires,\\ ou rester sur ces sept pour l'Option A ?
+  \\[6mm]
+  \small ex.\ une empreinte (hash) pour détecter les composants réutilisables --- pertinent seulement pour l'Option B
+  \end{center}
+\end{frame}
+
+\begin{frame}[standout]
+  Merci --- retours bienvenus
+\end{frame}
+
+\end{document}

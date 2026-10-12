@@ -1,0 +1,335 @@
+\documentclass[11pt]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\setbeamercolor{structure}{fg=blue!70!black}
+\setbeamercolor{block title}{bg=blue!70!black,fg=white}
+\setbeamercolor{block body}{bg=blue!5,fg=black}
+\setbeamercolor{block title alerted}{bg=red!70!black,fg=white}
+\setbeamercolor{block body alerted}{bg=red!5,fg=black}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+
+\title{De la maquette à une représentation hiérarchique}
+\subtitle{Étude comparative de quatre approches de génération de code frontend}
+\author{KOUONGA TADIE KENNEDY}
+\institute{Université de Douala}
+\date{}
+
+\begin{document}
+
+% ===================== TITLE =====================
+\begin{frame}
+\titlepage
+\end{frame}
+
+% ===================== PLAN =====================
+\begin{frame}{Plan}
+\begin{enumerate}
+\item Question de recherche et périmètre de l'étude
+\item Les quatre approches étudiées
+\item Ce qui différencie leurs entrées
+\item Comment mesurer la qualité d'une reconstruction
+\item Comparaison chiffrée des quatre approches
+\item Un mécanisme de correction automatique
+\item Aspects pratiques : coût et bibliothèques de style
+\item Limites actuelles et pistes de recherche
+\end{enumerate}
+\end{frame}
+
+% =========================================================
+\section{Question de recherche}
+
+\begin{frame}{Question de recherche}
+\begin{block}{Problème étudié}
+Comment passer d'une représentation visuelle d'une interface (maquette, capture d'écran, croquis) à une \textbf{représentation structurée et hiérarchique} qui pourra ensuite servir à générer automatiquement du code frontend~?
+\end{block}
+\begin{center}
+\begin{tikzpicture}[node distance=1.1cm, every node/.style={font=\small}]
+\node[draw, rounded corners, fill=gray!10, minimum width=3.2cm, minimum height=1cm] (a) {Maquette / capture};
+\node[draw, rounded corners, fill=blue!10, minimum width=3.2cm, minimum height=1cm, right=of a] (b) {Modèle hiérarchique};
+\node[draw, rounded corners, fill=green!10, minimum width=3.2cm, minimum height=1cm, right=of b] (c) {Code frontend};
+\draw[-{Latex}] (a) -- (b);
+\draw[-{Latex}] (b) -- (c);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}{Périmètre exact de cette étude}
+\begin{alertblock}{Où se situe le travail présenté}
+Cette étude se concentre uniquement sur la \textbf{première flèche} du schéma précédent~: comment transformer la maquette en modèle hiérarchique (arbre de composants, arbre de mise en page).
+\end{alertblock}
+\begin{center}
+\begin{tikzpicture}[node distance=1.1cm, every node/.style={font=\small}]
+\node[draw, rounded corners, fill=gray!10, minimum width=3.2cm, minimum height=1cm] (a) {Maquette / capture};
+\node[draw, rounded corners, fill=blue!20, thick, minimum width=3.2cm, minimum height=1cm, right=of a] (b) {Modèle hiérarchique};
+\node[draw, rounded corners, fill=green!5, dashed, minimum width=3.2cm, minimum height=1cm, right=of b] (c) {Code frontend};
+\draw[-{Latex}, thick] (a) -- (b);
+\draw[-{Latex}, dashed, gray] (b) -- (c);
+\node[below=0.2cm of a, font=\tiny] {étudié en détail};
+\node[below=0.2cm of b, font=\tiny] {étudié en détail};
+\node[below=0.2cm of c, font=\tiny, gray] {hors périmètre};
+\end{tikzpicture}
+\end{center}
+La génération finale du code (deuxième flèche) n'est pas l'objet direct de la comparaison~: elle sert seulement à évaluer, \textit{a posteriori}, si le modèle hiérarchique construit était de bonne qualité.
+\end{frame}
+
+\begin{frame}{Pourquoi une représentation intermédiaire ?}
+\begin{itemize}
+\item Une image décrit surtout \textbf{ce que l'on voit}.
+\item Le code doit exprimer \textbf{comment les éléments sont organisés}.
+\item Il faut donc retrouver les éléments, leurs relations, leur organisation spatiale et leurs comportements de mise en page.
+\end{itemize}
+\begin{block}{Point important}
+« Représentation hiérarchique » est utilisée au sens large~: arbre de composants, arbre de mise en page, arbre de subdivisions ou structure avec contraintes.
+\end{block}
+\end{frame}
+
+% =========================================================
+\section{Les quatre approches}
+
+\begin{frame}{Les quatre approches étudiées}
+\small
+\begin{tabular}{p{3cm}p{8.5cm}}
+\toprule
+\textbf{Approche} & \textbf{Idée principale} \\
+\midrule
+Prototype2Code & Reconstruire une hiérarchie à partir des relations de contenance, puis organiser en lignes/colonnes \\
+DCGen & Diviser récursivement l'image en segments ; la division forme un arbre \\
+ScreenCoder & Détecter et nommer les grandes régions, puis construire un arbre selon des règles de conception web \\
+DesignCoder & Diviser l'interface, extraire le sens des éléments, puis les regrouper dans un arbre de composants \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Ce que les quatre méthodes ont en commun}
+\begin{center}
+\begin{tikzpicture}[node distance=0.9cm, every node/.style={font=\small}]
+\node[draw, rounded corners, fill=blue!10, minimum width=2.6cm, minimum height=1cm] (d) {Détecter};
+\node[draw, rounded corners, fill=blue!10, minimum width=2.6cm, minimum height=1cm, right=of d] (r) {Relier};
+\node[draw, rounded corners, fill=blue!10, minimum width=2.6cm, minimum height=1cm, right=of r] (s) {Structurer};
+\node[draw, rounded corners, fill=blue!10, minimum width=2.6cm, minimum height=1cm, right=of s] (g) {Générer};
+\draw[-{Latex}] (d) -- (r);
+\draw[-{Latex}] (r) -- (s);
+\draw[-{Latex}] (s) -- (g);
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+\item Identifier des unités de l'interface (éléments, régions, widgets)
+\item Déterminer des relations entre ces unités
+\item Construire une structure (ne plus traiter l'image comme plate)
+\item Utiliser cette structure pour générer le code
+\end{enumerate}
+\end{frame}
+
+% =========================================================
+\section{Des entrées différentes}
+
+\begin{frame}{Deux familles d'entrées}
+Avant de comparer les résultats, il faut préciser ce que chaque méthode reçoit réellement en entrée~: cela change la difficulté du problème résolu.
+\vspace{0.3cm}
+\begin{columns}
+\begin{column}{0.48\textwidth}
+\begin{block}{Avec métadonnées de conception}
+\small
+\begin{itemize}
+\item Prototype2Code
+\item DesignCoder
+\end{itemize}
+\textit{Image + fichier Figma/Sketch (id, type, position, style déjà connus)}
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{Image seule}
+\small
+\begin{itemize}
+\item DCGen
+\item ScreenCoder
+\end{itemize}
+\textit{Aucune donnée cachée : tout doit être deviné depuis les pixels}
+\end{block}
+\end{column}
+\end{columns}
+\vspace{0.3cm}
+\small\textit{Comme monter un meuble avec la notice de montage, contre le monter seulement à partir d'une photo du résultat fini.}
+\end{frame}
+
+% =========================================================
+\section{Mesurer la qualité}
+
+\begin{frame}{Comment mesurer si une reconstruction est bonne ?}
+Deux questions distinctes se posent, et chacune a sa propre façon d'être mesurée~:
+\begin{block}{1. Est-ce que ça \textit{ressemble} à l'original ?}
+On compare les images (originale contre générée) --- similarité \textbf{visuelle}.
+\end{block}
+\begin{block}{2. Est-ce que c'est \textit{bien rangé} à l'intérieur ?}
+On compare les arbres de composants (référence contre généré) --- similarité \textbf{structurelle}.
+\end{block}
+\small\textit{Deux sites peuvent se ressembler visuellement tout en ayant un code totalement désorganisé derrière --- d'où l'intérêt de mesurer les deux séparément.}
+\end{frame}
+
+\begin{frame}{Les métriques de similarité visuelle, expliquées simplement}
+\begin{block}{CLIP score}
+\small Un réseau de neurones compare l'image originale et l'image générée et donne un score entre 0 et 1~: plus le score est proche de 1, plus les deux images \og{}veulent dire la même chose\fg{} visuellement.
+\end{block}
+\begin{block}{Block-match / Texte / Position / Couleur}
+\small On découpe les deux images en blocs (un bouton, un titre, une carte...), on les fait correspondre un à un, puis on vérifie si chaque bloc a la bonne taille, le bon texte, la bonne position et la bonne couleur.
+\end{block}
+\end{frame}
+
+\begin{frame}{Les métriques de similarité structurelle, expliquées simplement}
+\begin{block}{TreeBLEU}
+\small Compare l'arbre du code généré à l'arbre de référence, morceau par morceau (un peu comme on compterait combien de groupes de mots se retrouvent à l'identique entre deux phrases).
+\end{block}
+\begin{block}{Container Match}
+\small Vérifie si les éléments ont été regroupés dans les bons \og{}contenants\fg{} (le bon parent), sans juger les détails à l'intérieur --- juste~: est-ce que ce bouton a bien été rangé dans la bonne carte ?
+\end{block}
+\begin{block}{Tree Edit Distance (TED)}
+\small Nombre minimum d'opérations (ajouter, supprimer, renommer un nœud) nécessaires pour transformer l'arbre généré en l'arbre de référence. \textbf{Plus ce nombre est bas, mieux c'est.}
+\end{block}
+\end{frame}
+
+% =========================================================
+\section{Comparaison chiffrée}
+
+\begin{frame}{Fidélité visuelle : les scores CLIP}
+\begin{center}
+\small
+\begin{tabular}{lc}
+\toprule
+\textbf{Méthode} & \textbf{Score CLIP (ressemblance visuelle)} \\
+\midrule
+ScreenCoder & 81 \% \\
+DesignCoder & 92 \% \\
+DCGen & 86 \% \\
+Prototype2Code & non publié dans le document source \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+\small\textit{Ces scores proviennent des évaluations propres à chaque article et permettent une première comparaison quantitative, à interpréter en tenant compte de la différence d'entrées vue plus haut.}
+\end{frame}
+
+\begin{frame}{Fidélité structurelle : au-delà de l'apparence}
+\begin{center}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Méthode} & \textbf{TreeBLEU} & \textbf{Container Match} & \textbf{TED} \\
+\midrule
+Prototype2Code & 0.53 & 0.58 & 40.0 \\
+DesignCoder & \textbf{0.69} & \textbf{0.75} & \textbf{28.2} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+\small\textit{DesignCoder obtient un score supérieur sur les trois métriques structurelles~: son arbre de composants est non seulement visuellement fidèle, mais aussi mieux organisé --- notamment parce qu'il cherche à comprendre le \textbf{rôle} de chaque élément avant de le ranger.}
+\end{frame}
+
+% =========================================================
+\section{Correction automatique}
+
+\begin{frame}{Un mécanisme de correction automatique}
+Une des quatre méthodes ne se contente pas de produire le code en une seule passe~: elle vérifie et corrige son propre résultat.
+\begin{center}
+\begin{tikzpicture}[node distance=0.6cm, every node/.style={font=\footnotesize}]
+\node[draw, rounded corners, align=center, fill=blue!10, minimum width=2.3cm, minimum height=0.9cm] (g) {Code généré};
+\node[draw, rounded corners, align=center, fill=blue!10, minimum width=2.3cm, minimum height=0.9cm, right=of g] (r) {Rendu \\ photographié};
+\node[draw, rounded corners, align=center, fill=blue!10, minimum width=2.3cm, minimum height=0.9cm, right=of r] (c) {Comparaison \\ à l'original};
+\node[draw, rounded corners, align=center, fill=green!10, minimum width=2.3cm, minimum height=0.9cm, right=of c] (f) {Correction \\ automatique};
+\draw[-{Latex}] (g) -- (r);
+\draw[-{Latex}] (r) -- (c);
+\draw[-{Latex}] (c) -- (f);
+\draw[-{Latex}] (f) to[bend left=40] (g);
+\end{tikzpicture}
+\end{center}
+\small\textit{Sans ce module, les scores de DesignCoder chutent nettement (CLIP~: 0.92 $\to$ 0.88 ; TreeBLEU~: 0.66 $\to$ 0.55) --- ce qui confirme que cette boucle de vérification a un effet mesurable sur la qualité finale.}
+\end{frame}
+
+% =========================================================
+\section{Aspects pratiques}
+
+\begin{frame}{Coût et bibliothèques de style}
+\begin{block}{Bibliothèques de composants}
+ScreenCoder génère directement en \textbf{Tailwind CSS}, une bibliothèque de styles standard, plutôt que du CSS entièrement fait main.
+\end{block}
+\begin{block}{Temps de génération}
+ScreenCoder discute explicitement le compromis \textbf{coût contre qualité}~: un modèle plus petit permet un rendu rapide et approximatif, un modèle plus grand prend plus de temps (de l'ordre de quelques dizaines de secondes) pour un résultat plus fidèle.
+\end{block}
+\begin{alertblock}{Ce qui reste ouvert}
+Aucune des quatre méthodes ne gère de design system personnalisé (tokens de couleur ou de typographie propres à une marque).
+\end{alertblock}
+\end{frame}
+
+% =========================================================
+\section{Limites et pistes}
+
+\begin{frame}{Limite : une image figée dans le temps}
+Les quatre méthodes construisent un arbre à partir d'une image \textbf{statique}, à un instant donné.
+\begin{itemize}
+\item Aucune ne modélise le survol de la souris, l'ouverture d'un menu ou d'une fenêtre modale.
+\item Aucune ne modélise l'adaptation dynamique à différentes tailles d'écran, au-delà de la mise en page initiale.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Limite : l'accessibilité n'est pas prise en compte}
+Aucune des quatre méthodes ne mentionne les normes d'accessibilité~:
+\begin{itemize}
+\item Pas de rôles sémantiques HTML5 profonds (\texttt{main}, \texttt{nav}, \texttt{article}).
+\item Pas de prise en compte des lecteurs d'écran ni de la navigation au clavier.
+\end{itemize}
+\small\textit{Ce constat vaut pour l'ensemble des quatre approches, pas seulement pour certaines d'entre elles.}
+\end{frame}
+
+\begin{frame}{Limite : dépendance à un langage cible unique}
+\begin{center}
+\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Méthode} & \textbf{Technologie cible unique} \\
+\midrule
+DesignCoder & React Native uniquement \\
+Prototype2Code, DCGen, ScreenCoder & HTML/CSS uniquement \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+Aucune méthode ne produit un format intermédiaire réellement indépendant de la technologie de sortie.
+\end{frame}
+
+\begin{frame}{Conclusion et pistes de recherche}
+\begin{block}{Synthèse}
+Les travaux étudiés convergent vers une même idée~: la maquette doit être transformée en une représentation structurée avant de produire le code. La qualité de cette représentation intermédiaire conditionne directement la qualité du code final.
+\end{block}
+\begin{alertblock}{Question qui se dégage}
+Quel niveau d'information doit contenir notre modèle pour être indépendant de la technologie cible tout en restant suffisamment riche pour générer ensuite React, HTML/CSS, Flutter, etc. ?
+\end{alertblock}
+\begin{block}{Trois pistes concrètes}
+\begin{enumerate}
+\item Un format intermédiaire réellement indépendant du langage cible
+\item Une gestion des états d'interface (survol, clic, responsive)
+\item Une prise en compte de l'accessibilité dès la construction de l'arbre
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\begin{frame}{Références principales}
+\footnotesize
+\begin{itemize}
+\item S. Xiao et al. \textit{Prototype2Code}. arXiv:2405.04975, 2024.
+\item Y. Wan et al. \textit{Divide-and-Conquer: Generating UI Code from Screenshots}. Proc. ACM Softw. Eng., FSE, 2025.
+\item Y. Jiang et al. \textit{ScreenCoder}. arXiv:2507.22827, 2025.
+\item Y. Chen et al. \textit{DesignCoder: Hierarchy-Aware and Self-Correcting UI Code Generation}. arXiv:2506.13663, 2025.
+\end{itemize}
+\end{frame}
+
+\end{document}

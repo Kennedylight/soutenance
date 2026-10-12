@@ -1,0 +1,5 @@
+\babel@toc {french}{}\relax 
+\beamer@sectionintoc {1}{La maquette haute fidélité}{3}{0}{1}
+\beamer@sectionintoc {2}{Le modèle}{7}{0}{2}
+\beamer@sectionintoc {3}{Le lien entre maquette et modèle}{12}{0}{3}
+\beamer@sectionintoc {4}{Cas pratique : de la maquette au graphe}{14}{0}{4}

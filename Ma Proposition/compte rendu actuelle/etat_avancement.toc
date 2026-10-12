@@ -1,0 +1,8 @@
+\babel@toc {french}{}\relax 
+\beamer@sectionintoc {1}{Point de départ}{3}{0}{1}
+\beamer@sectionintoc {2}{Question 1 --- Quelle famille de méthode ?}{5}{0}{2}
+\beamer@sectionintoc {3}{Question 2 --- Dans quel ordre ?}{8}{0}{3}
+\beamer@sectionintoc {4}{Question 3 --- Que contient un nœud ?}{13}{0}{4}
+\beamer@sectionintoc {5}{Question 4 --- Sommes-nous vraiment nouveaux ?}{15}{0}{5}
+\beamer@sectionintoc {6}{Question 5 --- Quel terrain et quel outil ?}{17}{0}{6}
+\beamer@sectionintoc {7}{État d'avancement --- à l'essai}{21}{0}{7}

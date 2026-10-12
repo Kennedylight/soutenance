@@ -1,0 +1,140 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\definecolor{titlecolor}{HTML}{1A1A2E}
+\definecolor{h1color}{HTML}{16213E}
+\definecolor{h2color}{HTML}{0F3460}
+\definecolor{notebg}{HTML}{F0F4F8}
+\definecolor{tablehead}{HTML}{0F3460}
+\definecolor{rowalt}{HTML}{F5F7FA}
+\definecolor{graytext}{HTML}{555555}
+
+\titleformat{\section}{\Large\bfseries\color{h1color}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{h2color}}{\thesubsection}{1em}{}
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\newenvironment{note}
+  {\begin{center}\begin{minipage}{0.96\textwidth}\colorbox{notebg}{\begin{minipage}{0.94\textwidth}\vspace{4pt}}
+  }
+  {\vspace{4pt}\end{minipage}\end{minipage}\end{center}}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{
+  \color{titlecolor}\textbf{\huge Prototype2Code}\\[4pt]
+  \color{titlecolor}\Large De la maquette UI à l'Arbre de Mise en Page
+}
+\author{}
+\date{}
+
+\begin{document}
+
+\begin{center}
+  {\huge\bfseries\color{titlecolor} Prototype2Code}\\[6pt]
+  {\Large\color{h1color} De la maquette UI à l'Arbre de Mise en Page (UI Layout Tree)}\\[10pt]
+  {\color{graytext}\itshape Explication de la méthode décrite en section 3.2 et formalisée par l'Algorithme 1 :\\
+  construction de la hiérarchie, puis segmentation Row/Column pour le modèle Flexbox.}
+\end{center}
+
+\vspace{4pt}
+\noindent\rule{\textwidth}{0.6pt}
+\vspace{10pt}
+
+L'objectif du processus est de transformer une maquette (des rectangles positionnés en pixels, sans structure logique) en un \textbf{Arbre de Mise en Page (UI Layout Tree)} organisé en groupes imbriqués, façon « poupées russes ». Cette structure porte ensuite directement les instructions nécessaires à la génération de code HTML (imbrication de \code{<div>}) et CSS (Flexbox ou positionnement absolu). Le processus se déroule en deux grandes phases.
+
+\section*{Phase 1 --- Initialisation de l'arbre et gestion de la hiérarchie}
+
+Avant de construire l'arbre, le système exploite les résultats de l'étape de « linting » (correction) pour préparer des données propres.
+
+\subsection*{1. Reconstruction des relations de contenance}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item Les groupes perceptuels détectés (cartes, barres de navigation, etc.) sont triés par taille ascendante, du plus petit au plus grand.
+  \item Pour chaque couche, on calcule l'IoU (Intersection sur Union) afin de vérifier si elle appartient géométriquement à un groupe~; si oui, elle lui est rattachée.
+  \item Les éléments fragmentés (ex. les morceaux d'une icône coupée par la détection) sont fusionnés en une seule entité avec de nouvelles coordonnées globales, du point haut-gauche au point bas-droit.
+\end{itemize}
+
+\subsection*{2. Construction de l'arbre initial (Algorithme 1, Phase 1)}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item Extraction de toutes les couches « feuilles » --- les éléments terminaux comme le texte ou les images.
+  \item Ces éléments sont triés par taille \textbf{descendante}, du plus grand au plus petit.
+  \item Chaque élément est inséré sous le nœud qui le contient physiquement et qui possède la plus petite taille possible --- garantissant une hiérarchie précise, du type « poupée russe ».
+\end{itemize}
+
+\subsection*{3. Gestion des chevauchements}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item Pour chaque nœud, le système vérifie si ses enfants se superposent.
+  \item En cas de chevauchement, un nouveau nœud parent est créé avec l'attribut \code{need\_absolute=True}, indiquant que ces éléments devront utiliser un positionnement CSS absolu plutôt que le flux normal.
+\end{itemize}
+
+
+
+\section*{Phase 2 --- Segmentation Row/Column pour le modèle Flexbox}
+
+Une fois la hiérarchie de base établie, il faut organiser les éléments de façon ordonnée pour permettre un design adaptatif (responsive).
+
+\subsection*{1. Segmentation verticale (lignes)}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item L'algorithme cherche les coordonnées $Y$ où une ligne horizontale peut traverser toute la zone sans couper aucun élément.
+  \item Cela divise l'espace en segments verticaux --- des « étages ».
+\end{itemize}
+
+\subsection*{2. Segmentation horizontale (colonnes)}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item À l'intérieur de chaque segment vertical, le système cherche des coordonnées $X$ pour tracer des lignes verticales sans couper d'éléments.
+  \item Cela permet de regrouper les éléments côte à côte sur une même ligne.
+\end{itemize}
+
+\subsection*{3. Récursion et attribution Flexbox}
+\begin{itemize}[leftmargin=1.2em, itemsep=4pt]
+  \item Les deux étapes précédentes sont appliquées récursivement jusqu'à ce qu'il soit impossible de segmenter davantage.
+  \item Si plusieurs éléments sont dans le même segment horizontal~: le parent reçoit \code{flex-direction: row}.
+  \item S'ils sont alignés verticalement~: le parent reçoit \code{flex-direction: column}.
+\end{itemize}
+
+\section*{Synthèse des deux phases}
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.4cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{tablehead}
+\textcolor{white}{\textbf{Phase}} & \textcolor{white}{\textbf{Objectif}} & \textcolor{white}{\textbf{Sortie produite}} \\
+\hline
+\rowcolor{white}
+1. Initialisation de la hiérarchie &
+Déterminer les relations de contenance et fusionner les éléments fragmentés &
+Arbre brut « poupée russe » + nœuds \code{need\_absolute=True} \\
+\hline
+\rowcolor{rowalt}
+2. Segmentation Flexbox &
+Découper récursivement l'espace en lignes puis colonnes &
+Arbre final avec \code{flex-direction: row / column} sur chaque parent \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section*{Résultat final}
+
+À l'issue de ce processus, on obtient un arbre structuré où chaque nœud porte des instructions explicites pour la génération de code~: imbrication HTML (des \code{<div>} logiquement groupés) et modèle de boîte CSS (Flexbox en \code{row}/\code{column}, ou positionnement absolu lorsque nécessaire). Cette organisation en « groupes imbriqués » rend le code final bien plus maintenable et lisible qu'un placement au pixel près.
+
+\end{document}

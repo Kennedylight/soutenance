@@ -1,0 +1,81 @@
+
+\documentclass{beamer}
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+
+\title[DeclarUI]{DeclarUI : Automatisation de la Génération de Code UI}
+\subtitle{Bridging Design and Development with MLLMs}
+\author{Basé sur Zhou et al. (2025)}
+\date{\today}
+
+\begin{document}
+
+% Page de titre
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% 1. Introduction
+\begin{frame}{Introduction}
+    \begin{itemize}
+        \item \textbf{Contexte :} Adoption massive des frameworks UI déclaratifs (React Native, Flutter) pour le développement mobile.
+        \item \textbf{Avantages :} Meilleure lisibilité du code, facilité de maintenance et séparation des préoccupations.
+        \item \textbf{Opportunité :} L'émergence des modèles de langage multimodaux (MLLM) permet d'interpréter des designs visuels pour générer du code.
+    \end{itemize}
+\end{frame}
+
+% 2. Le Problème
+\begin{frame}{Le Problème}
+    \begin{itemize}
+        \item \textbf{Processus manuel :} La traduction des maquettes (Figma) en code fonctionnel reste une tâche humaine lente, complexe et sujette aux erreurs.
+        \item \textbf{Limites des outils actuels :} Les méthodes existantes peinent avec les designs complexes et échouent souvent à capturer la logique d'interaction.
+        \item \textbf{Fardeau cognitif :} Les développeurs doivent mapper manuellement chaque élément visuel à son implémentation logicielle.
+    \end{itemize}
+\end{frame}
+
+% 3. Problématique
+\begin{frame}{Problématique}
+    \textit{Pourquoi les MLLM seuls ne suffisent-ils pas ?}
+    \vspace{0.3cm}
+    \begin{enumerate}
+        \item \textbf{Reconnaissance imprécise :} Manque de précision dans l'identification des composants individuels.
+        \item \textbf{Logique interactive limitée :} Difficulté à déduire le flux de navigation à partir d'images statiques.
+        \item \textbf{Incohérence multi-pages :} Comportements divergents d'un écran à l'autre au sein d'une même application.
+        \item \textbf{Fiabilité du code :} Présence fréquente d'erreurs de syntaxe ou de compilation.
+    \end{enumerate}
+\end{frame}
+
+% 4. Solutions apportées par DeclarUI
+\begin{frame}{Solutions apportées par DeclarUI}
+    L'approche synergique de DeclarUI repose sur trois piliers :
+    \begin{itemize}
+        \item \textbf{Vision par ordinateur (CV) :} Utilisation de \textit{Grounding DINO} et \textit{SAM} pour segmenter et extraire précisément les composants.
+        \item \textbf{Graphe de Transition de Pages (PTG) :} Modélisation structurée de la navigation entre les écrans pour guider le MLLM.
+        \item \textbf{Raffinement itératif :} Processus de correction automatique basé sur les retours du compilateur et la vérification de l'intégrité de navigation.
+    \end{itemize}
+\end{frame}
+
+% 5. Limites
+\begin{frame}{Limites}
+    \begin{itemize}
+        \item \textbf{Écart de connaissances :} Performance moindre sur des frameworks récents ou moins "mainstream" comme \textit{ArkUI}.
+        \item \textbf{Coûts et jetons :} La taille de l'échantillon d'évaluation est limitée par les contraintes de coût (tokens) des MLLM.
+        \item \textbf{Perception humaine :} Les métriques automatiques (CLIP/SSIM) ne capturent pas toujours parfaitement la similarité visuelle perçue par l'utilisateur.
+        \item \textbf{Dépendance :} La qualité dépend fortement du modèle MLLM de base utilisé (ex: Claude-3.5 vs GPT-4o).
+    \end{itemize}
+\end{frame}
+
+% 6. Conclusion
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item \textbf{Efficacité :} DeclarUI atteint un taux de succès de compilation de 98\% sur React Native.
+        \item \textbf{Qualité industrielle :} Le code généré répond aux standards de lisibilité et de maintenance des professionnels.
+        \item \textbf{Généralisation :} L'outil prouve sa polyvalence en s'adaptant à plusieurs frameworks (React Native, Flutter, ArkUI).
+        \item \textbf{Impact :} Réduction significative du temps de développement et amélioration de la collaboration designer-développeur.
+    \end{itemize}
+\end{frame}
+
+\end{document}
